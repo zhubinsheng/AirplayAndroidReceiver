@@ -12,24 +12,21 @@ import com.cjx.airplayjavademo.model.NALPacket;
 import com.cjx.airplayjavademo.model.PCMPacket;
 import com.cjx.airplayjavademo.player.AudioPlayer;
 import com.cjx.airplayjavademo.player.VideoPlayer;
-import com.github.serezhka.jap2lib.rtsp.AudioStreamInfo;
-import com.github.serezhka.jap2lib.rtsp.VideoStreamInfo;
-import com.github.serezhka.jap2server.AirPlayServer;
-import com.github.serezhka.jap2server.AirplayDataConsumer;
+import com.github.serezhka.airplay.lib.AudioStreamInfo;
+import com.github.serezhka.airplay.lib.VideoStreamInfo;
+import com.github.serezhka.airplay.server.AirPlayConfig;
+import com.github.serezhka.airplay.server.AirPlayServer;
+import com.github.serezhka.airplay.server.AirPlayConsumer;
 
 import java.util.LinkedList;
 
 public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback {
-
     private SurfaceView mSurfaceView;
     private AirPlayServer airPlayServer;
-    private static String TAG = "MainActivity";
-
+    private static String TAG = "airplay";
     private VideoPlayer mVideoPlayer;
     private AudioPlayer mAudioPlayer;
     private final LinkedList<NALPacket> mVideoCacheList = new LinkedList<>();
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,8 +36,13 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         mAudioPlayer = new AudioPlayer();
         mAudioPlayer.start();
 
-        airPlayServer = new AirPlayServer("caicai", 7000, 49152, airplayDataConsumer);
+        AirPlayConfig airPlayConfig = new AirPlayConfig();
+        airPlayConfig.setServerName("hero");
+        airPlayConfig.setWidth(1080);
+        airPlayConfig.setHeight(1920);
+        airPlayConfig.setFps(30);
 
+        airPlayServer = new AirPlayServer(airPlayConfig, airplayDataConsumer);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -51,13 +53,10 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                 }
             }
         }, "start-server-thread").start();
-
-
     }
-
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onDestroy() {
+        super.onDestroy();
         mAudioPlayer.stopPlay();
         mAudioPlayer = null;
         mVideoPlayer.stopVideoPlay();
@@ -65,11 +64,10 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         airplayDataConsumer = null;
         airPlayServer.stop();
     }
-
-    private AirplayDataConsumer airplayDataConsumer = new AirplayDataConsumer() {
+    private AirPlayConsumer airplayDataConsumer = new AirPlayConsumer() {
         @Override
         public void onVideo(byte[] video) {
-//            Logger.i(TAG, "rev video length :%d", video.length);
+            Log.i(TAG, "rev video length: " + video.length);
             NALPacket nalPacket=new NALPacket();
             nalPacket.nalData=video;
             if (mVideoPlayer != null) {
@@ -84,13 +82,18 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         }
 
         @Override
-        public void onVideoFormat(VideoStreamInfo videoStreamInfo) {
+        public void onVideoSrcDisconnect() {
 
         }
 
         @Override
+        public void onVideoFormat(VideoStreamInfo videoStreamInfo) {
+            Log.i(TAG, "rev onVideoFormat: " + videoStreamInfo.toString());
+        }
+
+        @Override
         public void onAudio(byte[] audio) {
-//            Logger.i(TAG, "rev audio length :%d", audio.length);
+            Log.i(TAG, "rev audio length: " + audio.length);
             PCMPacket pcmPacket=new PCMPacket();
             pcmPacket.data=audio;
             if (mAudioPlayer != null) {
@@ -100,8 +103,18 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         }
 
         @Override
-        public void onAudioFormat(AudioStreamInfo audioInfo) {
+        public void onAudioSrcDisconnect() {
 
+        }
+
+        @Override
+        public void onMediaPlaylist(String playlistUri) {
+            AirPlayConsumer.super.onMediaPlaylist(playlistUri);
+        }
+
+        @Override
+        public void onAudioFormat(AudioStreamInfo audioInfo) {
+            Log.i(TAG, "rev AudioStreamInfo: " + audioInfo.toString());
         }
     };
 
