@@ -6,7 +6,7 @@ android {
     compileSdk 32
 
     defaultConfig {
-        applicationId "com.cjx.airplayjavademo"
+        applicationId "com.java.airplay"
         minSdkVersion 27
         targetSdkVersion 32
         versionCode 1
@@ -45,16 +45,15 @@ dependencies {
 
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'com.google.android.material:material:1.2.1'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.1'
 
     // airplay
-    implementation 'org.jmdns:jmdns:3.5.7'
-    implementation 'com.googlecode.plist:dd-plist:1.23'
+    implementation 'org.jmdns:jmdns:3.5.8'
+    implementation 'com.googlecode.plist:dd-plist:1.26'
     implementation 'net.i2p.crypto:eddsa:0.3.0'
     implementation 'org.whispersystems:curve25519-java:0.5.0'
     // netty has slf4j
 //    implementation 'io.netty:netty-all:4.1.77.Final'
-    implementation ('io.netty:netty-all:4.1.77.Final'){
+    implementation ('io.netty:netty-all:4.1.86.Final'){
         exclude group: 'org.slf4j:slf4j-api'
     }
 //    implementation 'org.slf4j:slf4j-api:1.7.36'
@@ -65,4 +64,6 @@ dependencies {
 
     compileOnly 'org.projectlombok:lombok:1.18.26'
     annotationProcessor 'org.projectlombok:lombok:1.18.26'
+
+    implementation group: 'org.bytedeco', name: 'javacv-platform', version: '1.5.8'
 }

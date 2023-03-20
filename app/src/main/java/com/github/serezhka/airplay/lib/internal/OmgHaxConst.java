@@ -1,7 +1,10 @@
 package com.github.serezhka.airplay.lib.internal;
 
+import android.content.res.AssetManager;
+
+import com.air.player.MyApplication;
+
 import java.io.*;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,23 +44,23 @@ public class OmgHaxConst {
 
     static {
         try {
-            table_s1 = readBytes(OmgHaxConst.class.getResource("/table_s1"));
-            table_s2 = readBytes(OmgHaxConst.class.getResource("/table_s2"));
-            table_s3 = readBytes(OmgHaxConst.class.getResource("/table_s3"));
-            table_s4 = readBytes(OmgHaxConst.class.getResource("/table_s4"));
-            table_s5 = readInts(OmgHaxConst.class.getResource("/table_s5"));
-            table_s6 = readInts(OmgHaxConst.class.getResource("/table_s6"));
-            table_s7 = readInts(OmgHaxConst.class.getResource("/table_s7"));
-            table_s8 = readInts(OmgHaxConst.class.getResource("/table_s8"));
-            table_s9 = readInts(OmgHaxConst.class.getResource("/table_s9"));
-            table_s10 = readBytes(OmgHaxConst.class.getResource("/table_s10"));
+            AssetManager am = MyApplication.getAppContext().getAssets();
+            table_s1 = readBytes(am, ("table_s1"));
+            table_s2 = readBytes(am, ("table_s2"));
+            table_s3 = readBytes(am, ("table_s3"));
+            table_s4 = readBytes(am, ("table_s4"));
+            table_s5 = readInts(am, ("table_s5"));
+            table_s6 = readInts(am, ("table_s6"));
+            table_s7 = readInts(am, ("table_s7"));
+            table_s8 = readInts(am, ("table_s8"));
+            table_s9 = readInts(am, ("table_s9"));
+            table_s10 = readBytes(am, ("table_s10"));
         } catch (Exception e) {
             throw new RuntimeException("Init failed", e);
         }
     }
-
-    private static byte[] readBytes(URL url) throws IOException {
-        try (InputStream is = url.openStream();
+    public static byte[] readBytes(AssetManager assetManager, String assetsFileName) throws IOException {
+        try (InputStream is = assetManager.open(assetsFileName);
              ByteArrayOutputStream buffer = new ByteArrayOutputStream()) {
 
             int nRead;
@@ -71,14 +74,8 @@ public class OmgHaxConst {
         }
     }
 
-    /**
-     * Files.newBufferedReader(Paths.get(OmgHaxConst.class.getClassLoader().getResource("table_s5").toURI()))
-     * .lines().map(Long::decode).mapToInt(Long::intValue).toArray();
-     * Doesn't work !!! throws java.nio.file.FileSystemNotFoundException
-     * jar:file:/../java-airplay-lib/build/libs/java-airplay-lib-1.0-SNAPSHOT-all.jar!/table_s1
-     */
-    private static int[] readInts(URL url) throws IOException {
-        try (InputStream is = url.openStream();
+    private static int[] readInts(AssetManager assetManager, String assetsFileName) throws IOException {
+        try (InputStream is = assetManager.open(assetsFileName);
              BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
 
             List<String> tmp = new ArrayList<>();

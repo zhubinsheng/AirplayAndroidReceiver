@@ -1,46 +1,56 @@
-package com.cjx.airplayjavademo;
+package com.air.player;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.WindowManager;
 
-import com.cjx.airplayjavademo.model.NALPacket;
-import com.cjx.airplayjavademo.model.PCMPacket;
-import com.cjx.airplayjavademo.player.AudioPlayer;
-import com.cjx.airplayjavademo.player.VideoPlayer;
+import com.air.player.model.AACPacket;
+import com.air.player.model.NALPacket;
+import com.air.player.model.PCMPacket;
+import com.air.player.player.AudioPlayer;
+import com.air.player.player.VideoPlayer;
+import com.air.player.utils.FileWriteHelper;
 import com.github.serezhka.airplay.lib.AudioStreamInfo;
 import com.github.serezhka.airplay.lib.VideoStreamInfo;
 import com.github.serezhka.airplay.server.AirPlayConfig;
 import com.github.serezhka.airplay.server.AirPlayServer;
 import com.github.serezhka.airplay.server.AirPlayConsumer;
 
+import org.bytedeco.javacv.FFmpegFrameGrabber;
+import org.bytedeco.javacv.FFmpegFrameRecorder;
+
 import java.util.LinkedList;
 
-public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback {
-    private SurfaceView mSurfaceView;
+public class MainActivity extends Activity implements SurfaceHolder.Callback {
+    private AspectFrameLayout mSurfaceView;
     private AirPlayServer airPlayServer;
     private static String TAG = "airplay";
     private VideoPlayer mVideoPlayer;
     private AudioPlayer mAudioPlayer;
     private final LinkedList<NALPacket> mVideoCacheList = new LinkedList<>();
+
+    private FileWriteHelper fileWriteHelper = FileWriteHelper.createNewHelper();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         mSurfaceView = findViewById(R.id.surfaceView);
         mSurfaceView.getHolder().addCallback(this);
+        mSurfaceView.setAspectRatio(9f/16f);
         mAudioPlayer = new AudioPlayer();
         mAudioPlayer.start();
 
         AirPlayConfig airPlayConfig = new AirPlayConfig();
         airPlayConfig.setServerName("hero");
-        airPlayConfig.setWidth(1080);
-        airPlayConfig.setHeight(1920);
-        airPlayConfig.setFps(30);
+        airPlayConfig.setWidth(VideoPlayer.mVideoWidth);
+        airPlayConfig.setHeight(VideoPlayer.mVideoHeight);
+        airPlayConfig.setFps(45);
 
         airPlayServer = new AirPlayServer(airPlayConfig, airplayDataConsumer);
         new Thread(new Runnable() {
@@ -53,10 +63,15 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                 }
             }
         }, "start-server-thread").start();
+
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        fileWriteHelper.createAudioFile(this, "test");
     }
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         mAudioPlayer.stopPlay();
         mAudioPlayer = null;
         mVideoPlayer.stopVideoPlay();
@@ -94,12 +109,15 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         @Override
         public void onAudio(byte[] audio) {
             Log.i(TAG, "rev audio length: " + audio.length);
-            PCMPacket pcmPacket=new PCMPacket();
+            AACPacket pcmPacket=new AACPacket();
             pcmPacket.data=audio;
+
+            fileWriteHelper.write2File(audio);
             if (mAudioPlayer != null) {
                 mAudioPlayer.addPacker(pcmPacket);
             }
-
+            FFmpegFrameGrabber fFmpegFrameRecorder = new FFmpegFrameGrabber();
+            fFmpegFrameRecorder.s
         }
 
         @Override
@@ -109,6 +127,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
         @Override
         public void onMediaPlaylist(String playlistUri) {
+            Log.i(TAG, "rev onMediaPlaylist: " + playlistUri.toString());
             AirPlayConsumer.super.onMediaPlaylist(playlistUri);
         }
 

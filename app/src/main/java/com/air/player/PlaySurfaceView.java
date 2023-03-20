@@ -1,4 +1,4 @@
-package com.cjx.airplayjavademo;
+package com.air.player;
 
 import android.content.Context;
 import android.util.AttributeSet;

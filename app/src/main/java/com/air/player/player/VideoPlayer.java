@@ -1,4 +1,4 @@
-package com.cjx.airplayjavademo.player;
+package com.air.player.player;
 
 import android.annotation.SuppressLint;
 import android.media.MediaCodec;
@@ -9,7 +9,7 @@ import android.util.Log;
 import android.view.Surface;
 
 
-import com.cjx.airplayjavademo.model.NALPacket;
+import com.air.player.model.NALPacket;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.BlockingQueue;
@@ -18,8 +18,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class VideoPlayer {
     private static final String TAG = "VideoPlayer";
     private static final String MIME_TYPE = MediaFormat.MIMETYPE_VIDEO_AVC;
-    private final int mVideoWidth = 540;
-    private final int mVideoHeight = 960;
+    public static final int mVideoWidth = 1080;
+    public static final int mVideoHeight = 1920;
     private final MediaCodec.BufferInfo mBufferInfo = new MediaCodec.BufferInfo();
     private MediaCodec mDecoder = null;
     private final Surface mSurface;
@@ -110,62 +110,4 @@ public class VideoPlayer {
         packets.clear();
     }
 
-    private void doDecode(NALPacket nalPacket) throws IllegalStateException {
-        final long timeoutUsec = 10000;
-//        Log.i(TAG, "doDecode: start");
-        if (nalPacket.nalData == null) {
-            Log.w(TAG, "doDecode: data is null return");
-            return;
-        }
-        //获取MediaCodec的输入流
-        ByteBuffer[] decoderInputBuffers = mDecoder.getInputBuffers();
-        int inputBufIndex = -10000;
-        try {
-            inputBufIndex = mDecoder.dequeueInputBuffer(timeoutUsec);//设置解码等待时间，0为不等待，-1为一直等待，其余为时间单位
-        } catch (Exception e) {
-            Log.e(TAG, "dequeueInputBuffer error", e);
-        }
-        if (inputBufIndex >= 0) {
-            ByteBuffer inputBuf = decoderInputBuffers[inputBufIndex];
-            inputBuf.put(nalPacket.nalData);
-            // 输入流入队列
-            mDecoder.queueInputBuffer(inputBufIndex, 0, nalPacket.nalData.length, nalPacket.pts, 0);
-        } else {
-            Log.d(TAG, "dequeueInputBuffer failed");
-        }
-        decode(timeoutUsec);
-//        workHandler.post(new Runnable() {
-//            @Override
-//            public void run() {
-//                decode(TIMEOUT_USEC);
-//            }
-//        });
-//        Log.i(TAG, "doDecode: end");
-    }
-
-    @SuppressLint("WrongConstant")
-    private void decode(long timeoutUsec) {
-        int outputBufferIndex = -10000;
-        try {
-            outputBufferIndex = mDecoder.dequeueOutputBuffer(mBufferInfo, timeoutUsec);
-        } catch (Exception e) {
-            Log.e(TAG, "doDecode: dequeueOutputBuffer error:" + e.getMessage());
-        }
-        if (outputBufferIndex >= 0) {
-            mDecoder.releaseOutputBuffer(outputBufferIndex, true);
-//            try {
-//                Thread.sleep(50);
-//            } catch (InterruptedException ie) {
-//                ie.printStackTrace();
-//            }
-        } else if (outputBufferIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
-//            try {
-//                Thread.sleep(10);
-//            } catch (InterruptedException ie) {
-//                ie.printStackTrace();
-//            }
-        } else if (outputBufferIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
-            // not important for us, since we're using Surface
-        }
-    }
 }

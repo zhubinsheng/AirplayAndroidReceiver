@@ -1,4 +1,4 @@
-package com.cjx.airplayjavademo.model;
+package com.air.player.model;
 
 public class NALPacket {
     public byte[] nalData = null;
